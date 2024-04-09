@@ -1,7 +1,12 @@
-name = "d2-demo"
+name = "d1-demo"
 main = "src/index.ts"
 compatibility_date = "2024-04-05"
 compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "DB"                                       # i.e. available in your Worker on env.DB
+database_name = "d1-demo"
+database_id = "21f119ee-03b4-40ae-bcbd-ef6873540197"
 
 # Variable bindings. These are arbitrary, plaintext strings (similar to environment variables)
 # Note: Use secrets to store sensitive data.

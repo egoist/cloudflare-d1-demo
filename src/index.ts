@@ -1,3 +1,8 @@
+import { drizzle } from 'drizzle-orm/d1';
+import { Hono } from 'hono';
+import * as schema from './schema';
+import { eq } from 'drizzle-orm';
+
 /**
  * Welcome to Cloudflare Workers! This is your first worker.
  *
@@ -8,7 +13,7 @@
  * Learn more at https://developers.cloudflare.com/workers/
  */
 
-export interface Env {
+type Bindings = {
 	// Example binding to KV. Learn more at https://developers.cloudflare.com/workers/runtime-apis/kv/
 	// MY_KV_NAMESPACE: KVNamespace;
 	//
@@ -23,10 +28,37 @@ export interface Env {
 	//
 	// Example binding to a Queue. Learn more at https://developers.cloudflare.com/queues/javascript-apis/
 	// MY_QUEUE: Queue;
-}
 
-export default {
-	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-		return new Response('Hello World!');
-	},
+	DB: D1Database;
 };
+
+const app = new Hono<{ Bindings: Bindings }>();
+
+app.get('/', async (c) => {
+	const db = drizzle(c.env.DB);
+
+	const id = crypto.randomUUID();
+
+	const now = performance.now();
+	await db.insert(schema.post).values({
+		id,
+		createdAt: new Date(),
+		title: 'Hello World',
+		content: 'This is a test post.',
+	});
+
+	const elapsed = performance.now() - now;
+	return c.text(`created ${id} in ${elapsed}ms`);
+});
+
+app.get('/posts/:id', async (c) => {
+	const db = drizzle(c.env.DB);
+	const id = c.req.param('id');
+	const now = performance.now();
+	await db.select().from(schema.post).where(eq(schema.post.id, id)).get();
+	const elapsed = performance.now() - now;
+
+	return c.text(`retrieved ${id} in ${elapsed}ms`);
+});
+
+export default app;
